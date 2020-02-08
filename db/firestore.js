@@ -1,6 +1,8 @@
-const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-admin.initializeApp();
+const serviceAccount = require('../wiki-huh-firebase-adminsdk-my2qj-5feb5ffdaa');
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 const db = admin.firestore();
 
@@ -10,10 +12,6 @@ const playersCollection = db.collection('players');
 const randomQuips = db.collection('randomQuips');
 
 const FieldValue = admin.firestore.FieldValue;
-
-module.exports.server = {
-  functions,
-};
 
 module.exports.firestore = {
   db,
