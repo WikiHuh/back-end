@@ -42,20 +42,59 @@ const createGame = (ownerKey) => {
     playerKeys: [ownerKey],
     currentState: 'Waiting for players to join',
   }).then(docRef => {
-    return docRef.id;
+    if (!snapshot.empty) {
+      return {...snapshot.docs[0].data(), id: snapshot.docs[0].id};
+    }
+    return null;
   });
 };
 
-const getRandomQuip = () => {
-  return randomQuips.where('id', '>=', '').orderBy('random').limit(1).get().then(snapshot => {
-    if (!snapshot.empty) {
-      return snapshot.data();
+const startGame = (gameKey, pictureId) => {
+  return games.doc(gameKey).update({
+    currentState: 'Waiting for responses',
+    pictureId: pictureId,
+  }).then(docRef => docRef.id);
+};
+
+const getGame = (gameKey) => {
+  return games.doc(gameKey).get().then(doc => {
+    if (!doc.exists) {
+      return null;
+    } else {
+      return doc.data();
     }
   });
+};
+
+const getRandomPicture = () => {
+  return pictures.where('id', '>=', '')
+    .orderBy('random').limit(1).get()
+    .then(snapshot => {
+      if (!snapshot.empty) {
+        return {...snapshot.docs[0].data(), id: snapshot.docs[0].id};
+      }
+      return null;
+    });
+};
+
+
+const getRandomQuip = () => {
+  return randomQuips.where('id', '>=', '')
+    .orderBy('random').limit(1).get()
+    .then(snapshot => {
+      if (!snapshot.empty) {
+        return {...snapshot.docs[0].data(), id: snapshot.docs[0].id};
+      }
+      return null;
+    });
 };
 
 module.exports = {
   createUser,
   addUserToGame,
   createGame,
+  startGame,
+  getGame,
+  getRandomPicture,
+  getRandomQuip,
 };
