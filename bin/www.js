@@ -44,7 +44,8 @@ io.on('connection', socket => {
         datastore.createGame(playerKey).then((newGame) => {
           console.log('successfully created game ' + JSON.stringify(newGame));
           socket.join(newGame['key']);
-          socket.emit(playerKey);
+          socket.emit('new player', playerKey);
+          socket.emit('new game', newGame['key']);
         }).catch(err => {
           console.error('Error creating user: ' + err);
         });
