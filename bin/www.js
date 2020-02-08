@@ -16,38 +16,56 @@ var io = require('socket.io')(server);
 io.on('connection', socket => {
   console.log('new socket connection established');
 
+  // name, pin
   socket.on('join game', data => {
-    console.log('joining game');
-    datastore.createUser(data['name']).then(playerKey => {
-      return datastore.addUserToGame(playerKey, data['pin']);
-    }).then(joinedGame => {
-      console.log('successfully joined game with key ' + joinedGame['key']);
-      socket.join(joinedGame['key']);
-    }).catch(err => {
-      console.error('Error creating user: ' + err);
-    });
-  });
-
-  socket.on('create game', data => {
-    console.log('creating game');
-    datastore.createUser(data['name']).then(playerKey => {
-      console.log('successfully created user! ' + playerKey);
-      return datastore.createGame(playerKey);
-    }).then((newGame) => {
-      console.log('successfully created game ' + JSON.stringify(newGame));
-      socket.join(newGame['key']);
-    }).catch(err => {
-      console.error('Error creating user: ' + err);
-    });
-  });
-
-  socket.on('start game', data => {
-    console.log('starting game');
-    const gameData = datastore.getGame(data['gameKey']);
-    if (gameData['ownerKey'] === data['playerKey']) {
-      startGame(gameData);
+    if (data['name'] && data['pin']) {
+      console.log('joining game');
+      datastore.createUser(data['name']).then(playerKey => {
+        datastore.addUserToGame(playerKey, data['pin']).then(joinedGame => {
+          console.log('successfully joined game with key ' + joinedGame['key']);
+          socket.join(joinedGame['key']);
+          socket.emit('playerKey', playerKey);
+          io.in(gameKey).emit('new player', data['name']);
+        }).catch(err => {
+          console.error('Error creating user: ' + err);
+        });
+      });
     } else {
-      console.log('tried to start game without being owner of the game');
+      socket.emit('dammit kirpal');
+    }
+  });
+
+  // name
+  socket.on('create game', data => {
+    if (data['name']) {
+      console.log('creating game');
+      datastore.createUser(data['name']).then(playerKey => {
+        console.log('successfully created user! ' + playerKey);
+        datastore.createGame(playerKey).then((newGame) => {
+          console.log('successfully created game ' + JSON.stringify(newGame));
+          socket.join(newGame['key']);
+          socket.emit(playerKey);
+        }).catch(err => {
+          console.error('Error creating user: ' + err);
+        });
+      });
+    } else {
+      socket.emit('dammit kirpal');
+    }
+  });
+
+  // gameKey, playerKey
+  socket.on('start game', data => {
+    if (data['gameKey'] && data['playerKey']) {
+      console.log('starting game');
+      const gameData = datastore.getGame(data['gameKey']);
+      if (gameData['ownerKey'] === data['playerKey']) {
+        startGame(gameData);
+      } else {
+        console.log('tried to start game without being owner of the game');
+      }
+    } else {
+      socket.emit('dammit kirpal');
     }
   });
 });
